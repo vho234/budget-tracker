@@ -61,6 +61,13 @@ export class BudgetDatabase extends Dexie {
 
 export const db = new BudgetDatabase();
 
+// Seed defaults when the database is first created
+db.on('populate', () => {
+  db.categories.bulkAdd(DEFAULT_CATEGORIES);
+  db.paymentMethods.bulkAdd(DEFAULT_PAYMENT_METHODS);
+  db.incomeSources.bulkAdd(DEFAULT_INCOME_SOURCES);
+});
+
 export const DEFAULT_CATEGORIES: Category[] = [
   { id: 'cat-groceries', name: 'Groceries', color: '#22c55e' },
   { id: 'cat-rent', name: 'Rent/Housing', color: '#3b82f6' },
