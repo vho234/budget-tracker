@@ -131,6 +131,7 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
   }, [setError]);
 
   useEffect(() => {
+    mountedRef.current = true;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data load on mount is intentional
     loadData(INITIAL_MONTH);
     return () => { mountedRef.current = false; };
