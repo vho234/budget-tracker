@@ -1,73 +1,53 @@
-# React + TypeScript + Vite
+# Budget Tracker
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A personal budget tracking app with a glass-morphism UI. Fully offline — all data is stored locally in your browser (IndexedDB). No backend or account required.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- 💰 Track expenses and income
+- 📊 Visual dashboards with charts (spending by category, budget vs actual, trends)
+- 🏷️ Custom categories, payment methods, and income sources
+- 🔄 Recurring transactions (auto-generated)
+- 🎯 Monthly budget goals with progress tracking
+- 🔒 Optional PIN lock for privacy
+- 📦 Export/import data as JSON backup
+- 🌙 Dark mode glass-morphism design
 
-## React Compiler
+## Getting Started
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Prerequisites
 
-## Expanding the ESLint configuration
+- [Node.js](https://nodejs.org/) (v18 or later)
+- npm (comes with Node.js)
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Clone and Run
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+git clone https://github.com/vho234/budget-tracker.git
+cd budget-tracker
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Then open http://localhost:5173 in your browser.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### Build for Production
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run build
 ```
+
+This creates a `dist/` folder with static files you can deploy anywhere (GitHub Pages, Vercel, Netlify, etc.).
+
+## Tech Stack
+
+- React 19 + TypeScript
+- Vite 8
+- Tailwind CSS v4
+- Dexie (IndexedDB wrapper)
+- Recharts
+- React Router v7
+
+## Data Storage
+
+All data stays in your browser's IndexedDB. Nothing is sent to any server. Updating the app (pulling new code) does **not** erase your data — only clearing your browser's site data would do that.
