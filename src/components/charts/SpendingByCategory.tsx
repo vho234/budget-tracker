@@ -36,13 +36,28 @@ export function SpendingByCategory() {
             data={data}
             cx="50%"
             cy="50%"
-            outerRadius={90}
-            innerRadius={40}
+            outerRadius={80}
+            innerRadius={35}
             dataKey="value"
-            label={({ percent }) =>
-              `${((percent ?? 0) * 100).toFixed(0)}%`
-            }
-            labelLine={{ stroke: '#94a3b8' }}
+            label={({ cx, cy, midAngle, outerRadius, percent, fill }) => {
+              const RADIAN = Math.PI / 180;
+              const radius = outerRadius + 30;
+              const x = cx + radius * Math.cos(-midAngle * RADIAN);
+              const y = cy + radius * Math.sin(-midAngle * RADIAN);
+              return (
+                <text
+                  x={x}
+                  y={y}
+                  fill={fill}
+                  textAnchor={x > cx ? 'start' : 'end'}
+                  dominantBaseline="central"
+                  fontSize={12}
+                >
+                  {`${((percent ?? 0) * 100).toFixed(0)}%`}
+                </text>
+              );
+            }}
+            labelLine={{ stroke: '#94a3b8', strokeWidth: 1 }}
           >
             {data.map((entry, index) => (
               <Cell key={index} fill={entry.color} />
