@@ -56,6 +56,16 @@ export class BudgetDatabase extends Dexie {
       incomes: 'id, sourceId, date, paymentMethodId, recurringIncomeId, [sourceId+date], [recurringIncomeId+date]',
       recurringIncomes: 'id, sourceId, active',
     });
+    this.version(6).stores({
+      categories: 'id, name',
+      expenses: 'id, categoryId, date, paymentMethodId, recurringExpenseId, [categoryId+date], [recurringExpenseId+date]',
+      monthlyBudgets: 'id, categoryId, month, [categoryId+month]',
+      recurringExpenses: 'id, categoryId, active, paymentMethodId',
+      paymentMethods: 'id, name',
+      incomeSources: 'id, name',
+      incomes: 'id, sourceId, date, paymentMethodId, recurringIncomeId, [sourceId+date], [recurringIncomeId+date]',
+      recurringIncomes: 'id, sourceId, active, paymentMethodId',
+    });
   }
 }
 
