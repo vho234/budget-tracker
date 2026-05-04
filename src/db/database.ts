@@ -61,13 +61,6 @@ export class BudgetDatabase extends Dexie {
 
 export const db = new BudgetDatabase();
 
-// Seed defaults when the database is first created
-db.on('populate', () => {
-  db.categories.bulkAdd(DEFAULT_CATEGORIES);
-  db.paymentMethods.bulkAdd(DEFAULT_PAYMENT_METHODS);
-  db.incomeSources.bulkAdd(DEFAULT_INCOME_SOURCES);
-});
-
 export const DEFAULT_CATEGORIES: Category[] = [
   { id: 'cat-groceries', name: 'Groceries', color: '#22c55e' },
   { id: 'cat-rent', name: 'Rent/Housing', color: '#3b82f6' },
@@ -98,6 +91,13 @@ export const DEFAULT_INCOME_SOURCES: IncomeSource[] = [
   { id: 'inc-refunds', name: 'Refunds', color: '#f59e0b' },
   { id: 'inc-other', name: 'Other', color: '#6b7280' },
 ];
+
+// Seed defaults when the database is first created
+db.on('populate', () => {
+  db.categories.bulkAdd(DEFAULT_CATEGORIES);
+  db.paymentMethods.bulkAdd(DEFAULT_PAYMENT_METHODS);
+  db.incomeSources.bulkAdd(DEFAULT_INCOME_SOURCES);
+});
 
 function getLastDayOfMonth(month: string): string {
   const [year, monthNum] = month.split('-').map(Number);
