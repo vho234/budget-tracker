@@ -1,8 +1,11 @@
 import { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from 'react';
+import { getPinSetupStatus, dismissPinSetup } from '../crypto/pinManager';
+
+type PinSetupStatus = 'unseen' | 'dismissed' | 'configured';
 
 interface AuthState {
   isLocked: boolean;
-  isPinConfigured: boolean;
+  pinSetupStatus: PinSetupStatus;
   encryptionKey: CryptoKey | null;
 }
 
@@ -17,18 +20,12 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>(() => {
-    try {
-      const settings = localStorage.getItem('budget-tracker-settings');
-      const isPinConfigured = settings ? JSON.parse(settings).hasPinEnabled : false;
-      return {
-        isLocked: isPinConfigured,
-        isPinConfigured,
-        encryptionKey: null,
-      };
-    } catch {
-      localStorage.removeItem('budget-tracker-settings');
-      return { isLocked: false, isPinConfigured: false, encryptionKey: null };
-    }
+    const status = getPinSetupStatus();
+    return {
+      isLocked: status === 'configured' || status === 'unseen',
+      pinSetupStatus: status,
+      encryptionKey: null,
+    };
   });
 
   const unlock = useCallback((key: CryptoKey) => {
@@ -40,11 +37,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setPinConfigured = useCallback((value: boolean) => {
-    setState((prev) => ({ ...prev, isPinConfigured: value }));
+    setState((prev) => ({
+      ...prev,
+      pinSetupStatus: value ? 'configured' : 'dismissed',
+    }));
   }, []);
 
   const skipPin = useCallback(() => {
-    setState((prev) => ({ ...prev, isLocked: false, isPinConfigured: false }));
+    dismissPinSetup();
+    setState((prev) => ({ ...prev, isLocked: false, pinSetupStatus: 'dismissed' }));
   }, []);
 
   const value = useMemo(

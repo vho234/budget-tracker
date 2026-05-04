@@ -13,7 +13,7 @@ const navItems = [
 ];
 
 export function Sidebar() {
-  const { isPinConfigured, lock } = useAuth();
+  const { pinSetupStatus, lock } = useAuth();
 
   return (
     <aside className="w-64 bg-slate-900/80 text-white min-h-screen flex flex-col border-r border-white/[0.12]">
@@ -38,7 +38,7 @@ export function Sidebar() {
           </NavLink>
         ))}
       </nav>
-      {isPinConfigured && (
+      {pinSetupStatus === 'configured' && (
         <div className="p-4 border-t border-white/[0.16]">
           <button
             onClick={lock}

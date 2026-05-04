@@ -167,11 +167,80 @@ export async function recoverWithSecurityAnswer(
   }
 }
 
+export async function changePin(
+  currentPin: string,
+  newPin: string
+): Promise<CryptoKey | null> {
+  const settings = getStoredSettings();
+  if (!settings) return null;
+
+  const pinSalt = hexToBuffer(settings.pinSalt);
+  const hash = await hashPin(currentPin, pinSalt);
+  if (hash !== settings.pinHash) return null;
+
+  // Unwrap encryption key with current PIN
+  const currentDerivedKey = await deriveCryptoKey(currentPin, pinSalt);
+  let encryptionKey: CryptoKey;
+  try {
+    encryptionKey = await unwrapKey(
+      base64ToBuffer(settings.wrappedKey),
+      currentDerivedKey,
+      new Uint8Array(base64ToBuffer(settings.wrappedKeyIv))
+    );
+  } catch {
+    return null;
+  }
+
+  // Rewrap with new PIN
+  const newPinSalt = generateSalt();
+  const newPinHash = await hashPin(newPin, newPinSalt);
+  const newPinDerivedKey = await deriveCryptoKey(newPin, newPinSalt);
+  const { wrapped: newWrappedKey, iv: newWrappedKeyIv } = await wrapKey(
+    encryptionKey,
+    newPinDerivedKey
+  );
+
+  settings.pinHash = newPinHash;
+  settings.pinSalt = bufferToHex(newPinSalt);
+  settings.wrappedKey = bufferToBase64(newWrappedKey);
+  settings.wrappedKeyIv = bufferToBase64(newWrappedKeyIv.buffer as ArrayBuffer);
+  saveSettings(settings);
+
+  return encryptionKey;
+}
+
+export async function disablePin(currentPin: string): Promise<boolean> {
+  const settings = getStoredSettings();
+  if (!settings) return false;
+
+  const pinSalt = hexToBuffer(settings.pinSalt);
+  const hash = await hashPin(currentPin, pinSalt);
+  if (hash !== settings.pinHash) return false;
+
+  settings.hasPinEnabled = false;
+  saveSettings(settings);
+  return true;
+}
+
 export function getSecurityQuestion(): string | null {
   const settings = getStoredSettings();
   return settings?.securityQuestion ?? null;
 }
 
+export function getPinSetupStatus(): 'unseen' | 'dismissed' | 'configured' {
+  const settings = getStoredSettings();
+  if (!settings) {
+    const dismissed = localStorage.getItem('budget-tracker-pin-dismissed');
+    return dismissed ? 'dismissed' : 'unseen';
+  }
+  return settings.hasPinEnabled ? 'configured' : 'dismissed';
+}
+
+export function dismissPinSetup(): void {
+  localStorage.setItem('budget-tracker-pin-dismissed', 'true');
+}
+
 export function clearAllData(): void {
   localStorage.removeItem(SETTINGS_KEY);
+  localStorage.removeItem('budget-tracker-pin-dismissed');
 }

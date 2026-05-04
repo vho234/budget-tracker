@@ -14,15 +14,15 @@ import { RecurringPage } from './pages/RecurringPage';
 import { SettingsPage } from './pages/SettingsPage';
 
 function AppContent() {
-  const { isLocked, isPinConfigured } = useAuth();
+  const { isLocked, pinSetupStatus } = useAuth();
 
   // First time: show PIN setup (or skip)
-  if (!isPinConfigured && isLocked) {
+  if (pinSetupStatus === 'unseen' && isLocked) {
     return <PinSetup />;
   }
 
   // PIN configured but locked
-  if (isPinConfigured && isLocked) {
+  if (pinSetupStatus === 'configured' && isLocked) {
     return <PinLock />;
   }
 
