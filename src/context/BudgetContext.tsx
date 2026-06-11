@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef, type ReactNode } from 'react';
-import { db, seedDefaultCategories, getExpensesForMonth, getIncomesForMonth, getBudgetsForMonth, copyBudgetsFromPreviousMonth } from '../db/database';
+import { db, seedDefaultCategories, getExpensesForMonth, getIncomesForMonth, getBudgetsForMonth, copyBudgetsFromPreviousMonth, dedupeMonthlyBudgets } from '../db/database';
 import type { Category, Expense, MonthlyBudget, RecurringExpense, PaymentMethod, IncomeSource, Income, RecurringIncome } from '../models/types';
 import { generateRecurringExpenses, generateRecurringIncomes } from '../utils/recurring';
 
@@ -99,6 +99,7 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
   const loadData = useCallback(async (month: string) => {
     try {
       await seedDefaultCategories();
+      await dedupeMonthlyBudgets();
       await generateRecurringExpenses(month);
       await generateRecurringIncomes(month);
       if (month >= getCurrentMonth()) {

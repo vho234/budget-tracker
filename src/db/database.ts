@@ -142,33 +142,60 @@ export function getBudgetsForMonth(month: string) {
  * fresh id so editing/deleting in the new month does not affect the source.
  * No-op when the month already has any budgets (so deletes are not undone).
  */
+/**
+ * Remove duplicate budgets that share the same (categoryId, month) pair,
+ * keeping the one with the lowest id. One-time cleanup for users who hit
+ * the StrictMode double-mount race in copyBudgetsFromPreviousMonth.
+ */
+export async function dedupeMonthlyBudgets(): Promise<void> {
+  await db.transaction('rw', db.monthlyBudgets, async () => {
+    const all = await db.monthlyBudgets.toArray();
+    const seen = new Map<string, string>(); // key -> kept id
+    const toDelete: string[] = [];
+    for (const b of all.slice().sort((a, b) => a.id.localeCompare(b.id))) {
+      const key = `${b.categoryId}|${b.month}`;
+      const kept = seen.get(key);
+      if (kept === undefined) {
+        seen.set(key, b.id);
+      } else {
+        toDelete.push(b.id);
+      }
+    }
+    if (toDelete.length > 0) {
+      await db.monthlyBudgets.bulkDelete(toDelete);
+    }
+  });
+}
+
 export async function copyBudgetsFromPreviousMonth(month: string): Promise<void> {
-  const existingCount = await db.monthlyBudgets.where('month').equals(month).count();
-  if (existingCount > 0) return;
+  await db.transaction('rw', db.monthlyBudgets, async () => {
+    const existingCount = await db.monthlyBudgets.where('month').equals(month).count();
+    if (existingCount > 0) return;
 
-  const priorMonths = await db.monthlyBudgets
-    .where('month')
-    .below(month)
-    .toArray();
-  if (priorMonths.length === 0) return;
+    const priorMonths = await db.monthlyBudgets
+      .where('month')
+      .below(month)
+      .toArray();
+    if (priorMonths.length === 0) return;
 
-  const sourceMonth = priorMonths.reduce(
-    (latest, b) => (b.month > latest ? b.month : latest),
-    priorMonths[0].month,
-  );
+    const sourceMonth = priorMonths.reduce(
+      (latest, b) => (b.month > latest ? b.month : latest),
+      priorMonths[0].month,
+    );
 
-  const copies: MonthlyBudget[] = priorMonths
-    .filter((b) => b.month === sourceMonth)
-    .map((b) => ({
-      id: crypto.randomUUID(),
-      categoryId: b.categoryId,
-      month,
-      limit: b.limit,
-    }));
+    const copies: MonthlyBudget[] = priorMonths
+      .filter((b) => b.month === sourceMonth)
+      .map((b) => ({
+        id: crypto.randomUUID(),
+        categoryId: b.categoryId,
+        month,
+        limit: b.limit,
+      }));
 
-  if (copies.length > 0) {
-    await db.monthlyBudgets.bulkAdd(copies);
-  }
+    if (copies.length > 0) {
+      await db.monthlyBudgets.bulkAdd(copies);
+    }
+  });
 }
 
 export async function seedDefaultCategories(): Promise<void> {
