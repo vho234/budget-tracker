@@ -136,6 +136,41 @@ export function getBudgetsForMonth(month: string) {
     .toArray();
 }
 
+/**
+ * If the given month has no monthly budgets yet, copy the budgets from the
+ * most recent prior month that does have budgets. Each copied budget gets a
+ * fresh id so editing/deleting in the new month does not affect the source.
+ * No-op when the month already has any budgets (so deletes are not undone).
+ */
+export async function copyBudgetsFromPreviousMonth(month: string): Promise<void> {
+  const existingCount = await db.monthlyBudgets.where('month').equals(month).count();
+  if (existingCount > 0) return;
+
+  const priorMonths = await db.monthlyBudgets
+    .where('month')
+    .below(month)
+    .toArray();
+  if (priorMonths.length === 0) return;
+
+  const sourceMonth = priorMonths.reduce(
+    (latest, b) => (b.month > latest ? b.month : latest),
+    priorMonths[0].month,
+  );
+
+  const copies: MonthlyBudget[] = priorMonths
+    .filter((b) => b.month === sourceMonth)
+    .map((b) => ({
+      id: crypto.randomUUID(),
+      categoryId: b.categoryId,
+      month,
+      limit: b.limit,
+    }));
+
+  if (copies.length > 0) {
+    await db.monthlyBudgets.bulkAdd(copies);
+  }
+}
+
 export async function seedDefaultCategories(): Promise<void> {
   const catCount = await db.categories.count();
   if (catCount === 0) {
